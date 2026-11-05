@@ -3,7 +3,7 @@ import {retrieve} from '../../../../kb/gate1/retrieval.mjs';
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
 export async function onRequest({request,env}){
  const host=new URL(request.url).hostname;
- if(host!=='feature-scara-ai-kb-contract.etalon-4322.pages.dev')return reply({error:'PREVIEW_ONLY'},404);
+ if(!host.endsWith('.etalon-4322.pages.dev')||host==='etalon-4322.pages.dev')return reply({error:'PREVIEW_ONLY'},404);
  if(request.method!=='POST')return reply({error:'METHOD_NOT_ALLOWED'},405);
  // Never expose this route unless a secret was explicitly configured.
  if(!env.KB_ADMIN_TOKEN||env.KB_ADMIN_TOKEN.length<32)return reply({error:'ADMIN_DISABLED'},503);
