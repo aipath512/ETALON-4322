@@ -1,7 +1,7 @@
 (() => {
   if (document.getElementById('scara-ai')) return;
   const root = document.createElement('aside'); root.id = 'scara-ai'; root.setAttribute('aria-label', 'Asistent AI text');
-  root.innerHTML = `<button class="ai-launch" type="button" aria-expanded="false" aria-controls="scara-ai-panel" aria-label="Deschide asistentul AI conversațional" title="Întreabă asistentul AI"><img class="ai-launch-avatar" src="https://raw.githubusercontent.com/aipath512/scara-valorii/main/assistant/avatar.gif" alt="" aria-hidden="true" width="64" height="64" loading="eager" decoding="async" onerror="this.style.display='none';this.parentNode.textContent='AI'"></button>
+  root.innerHTML = `<button class="ai-launch" type="button" aria-expanded="false" aria-controls="scara-ai-panel" aria-label="Deschide asistentul AI conversațional" title="Întreabă asistentul AI"><img class="ai-launch-avatar" src="https://scara.dev/assistant/avatar.gif" alt="" aria-hidden="true" width="64" height="64" loading="eager" decoding="async" onerror="this.style.display='none';this.parentNode.textContent='AI'"></button>
   <section id="scara-ai-panel" class="ai-panel" role="dialog" aria-labelledby="scara-ai-title" hidden>
   <div class="ai-head"><div><h2 id="scara-ai-title" class="ai-title">Asistent AI text</h2><small>SCARA · Etalon 4322</small></div><button class="ai-close" type="button" aria-label="Închide conversația">×</button></div>
   <div class="ai-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversație"></div>
