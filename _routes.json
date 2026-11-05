@@ -2,7 +2,7 @@
   "version": 1,
   "include": [
     "/api/chat",
-    "/api/assistant/v1/chat"
+    "/api/assistant/v1/*"
   ],
   "exclude": []
 }
