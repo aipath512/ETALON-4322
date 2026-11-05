@@ -1,87 +1,91 @@
-# ETALON-4322 — SCARA AI ASSISTANT V3.0 — Implementation contract (Gate 0)
+# ETALON-4322 — SPEC V3.1 · Contract consolidat al deciziilor
 
-Status: PROPOSED / NOT DEPLOYED. This document specifies the shared KB-backed assistant; the existing `/api/chat` remains a demo with a hardcoded catalog.
+**Statut:** specificație aprobată ca direcție arhitecturală; implementarea RAG de producție NU este confirmată. **V2.0 este arhitectură de referință, nu contract executabil.** Acest document înlocuiește contractul V3.0 preliminar din acest fișier. Nu autorizează deploy sau migrarea producției.
 
-## Invariants
+## 1. Decizii obligatorii (fără alternative implicite)
 
-1. Exactly one logical sector KB `ETALON-4322` serves all approved sites with primary or secondary CAEN 4322.
-2. One versioned widget and one multi-tenant assistant API. Text is enabled on all plans; premium voice is an optional entitlement (20 minutes/month for the 20 EUR tier). No independent voice KB.
-3. R2 is the canonical content store. D1 stores structured catalog, tenants, confirmed offerings, entitlement state, KB generation pointers and immutable artifact/chunk references. Vectorize stores embeddings and metadata, not the canonical truth. A Worker orchestrates retrieval; the LLM synthesizes only from retrieved, verified context.
-4. CAEN association is NOT evidence that a specific company offers any of the 19 catalog services. Tenant claims are read only from separately confirmed D1 rows.
-5. No production rollout until Gate 0 integrity and isolation tests pass.
+- **O singură KB sectorială ETALON-4322**, pentru CAEN Rev.3 4322 principal SAU secundar; catalog inițial de **19 servicii**: 7 încălzire, 7 sanitare, 5 climatizare. Codul CAEN nu dovedește că firma execută toate serviciile.
+- **O singură implementare logică de chatbot/asistent AI** (widget comun, API comun, motor Hybrid RAG comun) pentru N site-uri, fără KB, embeddings sau LLM separat per firmă.
+- **Același text de răspuns**, sintetizat din KB și datele firmei confirmate, este afișat sau redat vocal; **nu există o KB vocală**.
+- **R2** stochează conținutul canonic și sursele, **D1 SQL** stochează catalogul, relațiile, datele confirmate ale firmelor, versiunile și drepturile; **Vectorize** stochează embeddings/referințe; **LLM** sintetizează din fragmente recuperate; **un Worker** orchestrează.
+- **Text inclus** în pachetele 10/15/20 EUR/lună. **Voce premium inclusă numai în pachetul 20 EUR/lună, limitată la 20 minute/lună** și contorizată server-side. Lipsa/epuizarea vocii nu oprește textul.
+- **Șase limbi inițiale**: RO, EN, FR, ES, DE, IT. Arhitectura permite ulterior 24 de limbi, dar acestea nu sunt promise ca funcționale înainte de testare. Jurisdicția normelor este separată de limba răspunsului.
+- Avatar animat GIF în bula asistentului, cu posibilitatea de până la 10 variante rotite central la fiecare oră; fără blocarea navigării sau a controalelor paginii.
 
-## Canonical identity
+## 2. Identitate și integritate (Gate 0)
 
-Each chunk has: `kb_id`, `schema_version`, `kb_version`, `artifact_id`, `fragment_id` (stable logical ID), `fragment_revision`, `content_sha256`, `embedding_input_sha256`, `embedding_model`, `embedding_model_version`, `index_version`, `vector_id`, `r2_key`, `jurisdiction`, `language`, `source_ids`, `review_status`.
+Identificatori obligatorii: `kb_id`, `schema_version`, `kb_version`, `artifact_id`, `fragment_id` logic stabil, `fragment_revision`, `content_sha256`, `embedding_input_sha256`, `embedding_model`, `embedding_model_version`, `index_version` separat de KB, `vector_id`, `r2_key`, `jurisdiction`, `language`, `source_ids`, `review_status`.
 
-- Hash canonical UTF-8 bytes with documented normalization/serialization. Any change to bytes changes the hash.
-- `fragment_id` is logical; `content_sha256` identifies exact content; `index_version` is independent from `kb_version`.
-- Each immutable manifest lists sorted artifact/chunk hashes, model settings, and expected index IDs. Store `manifest.sha256` separately to avoid self-referential hashing; anchor its digest using `manifest.json.ots`. A pending OTS proof is not a confirmed timestamp.
-- Embeddings must be generated from bytes whose SHA-256 equals `embedding_input_sha256`. OTS does not verify embedding semantics.
+- Specificați serializarea canonică UTF-8 înainte de calcularea SHA-256; hash-ul identifică octeții, nu sensul.
+- Manifestul conține lista sortată a fișierelor și fragmentelor, hash-urile și parametrii de indexare. Hash-ul manifestului se stochează separat în `manifest.sha256` (fără autoreferință).
+- **OpenTimestamps**: se generează `manifest.json.ots`; politica de activare cere verificarea integrității SHA-256 și a stării ancorării OTS. O dovadă OTS în așteptare nu se prezintă ca timestamp confirmat. Condiția exactă de activare (OTS confirmat sau doar ancorare inițiată) trebuie decisă explicit înainte de producție.
+- Embeddings se generează din intrarea al cărei SHA-256 este `embedding_input_sha256`. OTS nu demonstrează corespondența semantică dintre text și vector.
 
-## Index publication and rollback
+## 3. Publicare și rollback fără presupuneri de consistență imediată
 
-1. Write versioned objects to R2; validate manifest and provenance.
-2. Populate D1 exact metadata and lexical FTS index for an INACTIVE generation.
-3. Build Vectorize generation in a dedicated namespace (or separate index if provider namespace semantics are unsuitable); never overwrite active generation in place.
-4. Poll/verify query visibility and expected IDs (eventual consistency), run retrieval and safety regression tests; mark generation READY only after all gates pass.
-5. Atomically update D1 active generation pointer; each request pins exactly one generation for its lifetime.
-6. Keep previous R2 content and indexes for rollback. Rollback changes D1 pointer; it does not assume instant vector deletion.
-7. Reject mismatched versions and missing fragments; never silently mix generations.
+`DRAFT → VALIDATED → INDEXING → READY → TESTED → ACTIVE`.
 
-## Query execution
+1. Scriere R2 imuabilă per versiune, validare manifest, surse și drepturi de utilizare.
+2. Populare D1 metadata și **FTS5 lexical** pentru generația inactivă.
+3. Populare Vectorize în namespace/index distinct per `index_version`; fără suprascrierea generației active.
+4. Verificare explicită a vizibilității și completitudinii indexului (Vectorize este eventually consistent), plus evaluări de retrieval și siguranță.
+5. Comutare **atomică doar a pointerului D1**; cererea fixează o singură pereche `kb_version/index_version` până la final.
+6. Păstrarea generației precedente pentru rollback prin pointer, fără ștergere instantanee de vectori. Nu se pretinde atomicitate distribuită R2+D1+Vectorize.
 
-`POST /api/assistant/v1/chat` JSON:
-```json
-{"message":"De ce caloriferul este rece jos?","language":"ro","session_id":"opaque-client-session"}
-```
+## 4. API unic și rutare
 
-Site identity MUST be resolved and authorized server-side from registered host/site credentials; client-supplied tenant IDs are not authorization. Enforce per-tenant quotas and origin policy. Response:
-```json
-{"reply":"...","language":"ro","kb_id":"ETALON-4322","kb_version":"...","index_version":"...","sources":[{"fragment_id":"...","content_sha256":"..."}],"mode":"rag","request_id":"..."}
-```
+API țintă: `POST /api/assistant/v1/chat`. Identitatea tenantului este stabilită server-side dintr-o înregistrare de domeniu/site autorizată, nu dintr-un `tenant_id` arbitrar trimis de browser. Răspunsul include `request_id`, `reply`, `language`, `kb_version`, `index_version`, `mode`, `sources` (fragment ID + hash). Contract OpenAPI și format de streaming sunt livrabile obligatorii, încă nescrise.
 
-- FAST PATH: exact normalized lookup against approved, unambiguous canonical Q&A only; never rely on an arbitrary cosine threshold.
-- RAG PATH: D1 structured filters + lexical FTS + Vectorize semantic search, deduplicate/rerank, retrieve R2 fragments, verify hashes and provenance, then send only bounded context to LLM.
-- User input and retrieved text are untrusted data, separated structurally from system/developer instructions. Ignore instructions embedded in source material. Test prompt injection and cross-tenant data extraction.
-- If evidence is insufficient, explicitly say so and ask a clarifying question; do not invent commercial claims, authorization, availability, prices or hazardous repair steps.
-- LLM provider/model, timeout, streaming behavior and fallback must be fixed in configuration and validated before SLA claims.
+- **FAST PATH**: numai răspunsuri canonice unice, aprobate, potrivire deterministă sau criteriu calibrat pe set de validare; nu un prag cosine 0.78 ales arbitrar.
+- **RAG PATH**: D1 filtre exacte + FTS5 lexical + Vectorize semantic → deduplicare/reranking → fragmente din R2 verificate SHA-256 → LLM → răspuns verificabil.
+- Separare structurală system/developer instructions vs. input și documente recuperate, tratate ca date neîncredere. Teste adversariale prompt injection.
+- Informațiile sectoriale generale și **datele comerciale confirmate ale firmei** sunt recuperate în contexte distincte, cu etichete de proveniență; nu se deduc oferte, prețuri, disponibilitate sau autorizări din CAEN/KB.
+- Dacă lipsesc dovezi, se cere clarificare sau se declară limita; nu se furnizează proceduri periculoase pentru gaz, electricitate, presiune sau agent frigorific.
 
-## Shared widget and voice
+## 5. Model, fallback și performanță
 
-- Versioned JS/CSS loaded from one centrally managed URL; API compatibility matrix and cache policy are mandatory.
-- Text mode on all plans. Optional microphone + speech playback only when supported; browser capability detection and explicit fallback to text.
-- Premium server-side STT/TTS is a distinct entitlement, limited to 1200 seconds per billing month for the EUR 20 plan. Server-side accounting must prevent concurrent overspend.
-- One animated avatar component; optional centrally rotated GIF variants. Animation is presentation only.
-- Never claim speech support for a language/browser combination without a compatibility test.
+Alegerea finală a LLM, a modelului embeddings, a versiunilor, timeouturilor, streamingului, circuit breaker și fallback-ului este **decizie deschisă, obligatorie înainte de SLA**. Implementarea demonstrativă folosește Workers AI Llama 3.1 8B; aceasta **nu certifică** modelul de producție. Nu promitem 99,9% SLA sau p95 8 secunde fără măsurători end-to-end. În absența LLM, răspunsurile canonice FAST PATH pot funcționa; altfel eroare explicită, nu răspuns inventat.
 
-## Tenant isolation
+## 6. Widget unic, voce și sesiuni
 
-D1 stores confirmed services, tier, assistant enablement, quotas and active generation pointer. Commercial answers must be assembled from a separately labeled, verified tenant-facts context, not inferred from the sector KB. Session state is scoped by tenant and session, with explicit retention and deletion policies. No cross-tenant conversation sharing.
+- Un singur JS/CSS versionat distribuit central, cu contract de compatibilitate API, cache și rollback. Nu injectăm simultan două widgeturi.
+- Text în toate pachetele. Pentru 20 EUR/lună: STT/TTS premium activat prin entitlement D1, **1200 secunde/lună** cu contorizare server-side și control al concurenței; fallback la text.
+- Funcțiile vocale ale browserului, dacă sunt folosite, sunt opționale și testate per browser/versiune/limbă; **nu sunt echivalate cu vocea premium garantată**.
+- GIF în interiorul bulei; până la 10 variante, rotație centrală orară opțională, păstrând un avatar stabil pe durata sesiunii.
+- Istoric izolat per tenant/sesiune; alegerea D1 vs Durable Objects pentru stare activă, retenția, ștergerea și consimțământul sunt decizii de implementare deschise. Nu se reutilizează conversații între firme.
 
-## Gate 0 acceptance tests (automated)
+## 7. Conținut, proveniență și siguranță
 
-1. Modified canonical fragment fails SHA-256 validation.
-2. Wrong embedding input hash fails publication.
-3. Incomplete or not-yet-visible Vectorize generation cannot become ACTIVE.
-4. Every request uses one pinned `kb_version/index_version`.
-5. Rollback returns to prior tested generation without reindexing.
-6. Malicious retrieved text cannot override assistant instructions in adversarial tests.
-7. Tenant A cannot access tenant B commercial facts, sessions, or quotas.
-8. Text-only tier cannot invoke premium voice; voice quota exhaustion degrades to text.
-9. Unsupported browser microphone degrades to accessible text UI.
-10. Existing ETALON demo `/api/chat` remains operational until a separately approved cutover.
+Cele 19 servicii necesită fișe tehnice **distincte** (nu cele trei descrieri generice actuale), întrebări, intenții, scenarii, surse, data verificării, jurisdicție, licență și `review_status`. Documentele proprietare nu se copiază în KB fără drepturi. Regulile de siguranță și de escaladare sunt localizate pe jurisdicție, independent de limba vizitatorului. Corpusul și setul de evaluare se construiesc împreună; nu se declară exhaustivitate fără dovadă.
 
-## Delivery order
+## 8. Testare, observabilitate, economie
 
-Gate 0: canonical schemas + deterministic manifest/OTS tooling + D1 migrations + versioned index tests.
-Gate 1: R2/D1/FTS/Vectorize retrieval Worker and source-grounded LLM integration.
-Gate 2: universal widget, text + optional voice, tenant entitlement and telemetry.
-Gate 3: verified corpus for 19 services, safety and multilingual evaluation, controlled rollout.
+Teste executabile cu input, rezultat așteptat și prag: identitate/hash, index incomplet, generație fixată, rollback, lexical vs. semantic recall, faithfulness, refuz corect, prompt injection, izolare tenant, drepturi text/voce, limită 1200 secunde, browsere și limbi. LLM-as-judge se completează cu verificare umană pentru cazuri critice.
 
-## Current repository facts (2026-11-05)
+Loguri și tracing cu `request_id`, versiuni KB/index/model, latență, erori, utilizare și cost/tenant; datele personale sunt minimizate. Bugetele comerciale se validează pe trafic real înainte de extindere.
 
-- `services.json`: 19 sector services, all `confirmed_for_company: false`.
-- `ai-data/knowledge.js`: 19 entries with three repeated generic descriptions.
-- `functions/api/chat.js`: Workers AI `@cf/meta/llama-3.1-8b-instruct-fp8` with static imported JS catalog, NOT R2/D1/Vectorize retrieval.
-- No assertion of Cloudflare deployment, bindings, complete technical corpus, production voice metering or SLA is made by this document.
+## 9. Ordine de implementare (nu extindem domeniul prematur)
+
+**Gate 0:** contract fragment/hash/index + scheme JSON + manifest determinist/OTS + migrații D1 + strategie Vectorize + teste integritate/rollback.
+
+**Gate 1:** corpus minim verificat și set de evaluare + R2/D1/FTS5/Vectorize + Worker RAG + LLM/fallback; pilot end-to-end **un singur tenant, text**.
+
+**Gate 2:** widget unic și compatibil, izolare completă, metrici/costuri, pilot pe 10 firme după aprobări.
+
+**Gate 3:** voce premium cu cote și teste browser, apoi șase limbi validate; extinderea la 24 de limbi și N site-uri numai după certificare.
+
+## 10. Ce eliminăm din vechile formulări
+
+- Nu spunem că R2 → D1 → Vectorize → LLM este un lanț strict serial la fiecare întrebare: **indexarea** R2 → D1/Vectorize este separată de **interogarea** Worker → D1/FTS/Vectorize → R2 → LLM.
+- Nu afirmăm că OTS elimină drift-ul semantic, că Vectorize este imediat consistent sau că rollback-ul e tranzacție distribuită.
+- Nu afirmăm că promptul singur garantează zero halucinații.
+- Nu confundăm catalogul CAEN cu serviciile confirmate ale firmei.
+- Nu confundăm voice din browser cu serviciul premium de 20 minute.
+- Nu afirmăm că V3.1 este deja implementat, testat sau publicat.
+
+## 11. Situație constatată în repository (2026-11-05)
+
+- `services.json`: 19 servicii, `confirmed_for_company=false`.
+- `ai-data/knowledge.js`: 19 intrări, descrieri generice repetate pe trei familii.
+- `functions/api/chat.js`: Workers AI `@cf/meta/llama-3.1-8b-instruct-fp8` și catalog JS static; **NU** citește KB R2/D1/Vectorize.
+- Niciun deploy, binding Cloudflare, indexare completă sau voice premium nu este atestat de această specificație.
