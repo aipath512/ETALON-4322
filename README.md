@@ -36,3 +36,16 @@ Commitul `ffaa4dd87ad659c2fa17e0f457ee4a13968accae` a modificat homepage-ul să 
 - `assets/hero-climatizare.webp` (141.334 octeți; SHA-256 `d83bded865fcd5819a44b6ab745ec3840e5c78b8e8d5d3dc747da79f17dc24fa`)
 
 **Atenție:** aceste fișiere încă trebuie încărcate efectiv în repository. Fallback-ul extern Unsplash se va afișa cât timp lipsesc. Copierea lor în folderul `assets/` activează imaginile originale fără alte modificări HTML. Verificați URL-urile de asset și deploymentul Cloudflare după încărcare.
+
+
+## Asistent AI text — 5 noiembrie 2026
+
+- Bula „Asistent AI” este inclusă în toate cele 30 de pagini HTML, cu aceeași interfață responsive și fără funcții vocale.
+- `assets/assistant.js` și `assets/assistant.css`: conversație în memoria paginii, întrebări sugerate, Enter pentru trimitere, Shift+Enter pentru rând nou, Escape pentru închidere. Nicio cheie API în browser. Răspunsurile sunt redate ca text, nu HTML.
+- `functions/api/chat.js`: Pages Function same-origin; folosește Workers AI `@cf/meta/llama-3.1-8b-instruct-fp8`, maximum 400 tokenuri per răspuns și 6 mesaje de istoric.
+- `ai-data/knowledge.js`: cele 19 servicii și descrierile extrase din paginile etalonului. Actualizați acest fișier când modificați catalogul. Asistentul nu confirmă prețuri, firme, autorizații, programări sau comenzi inexistente.
+- `wrangler.jsonc` declară binding-ul `AI` și directorul static rădăcină. Configurația se aplică la deployment-ul Git Cloudflare Pages (build system V2 sau mai nou). `_routes.json` limitează execuția Functions la `/api/chat`.
+- `GET /api/chat` returnează `ready`; `POST /api/chat` primește `{message, history}` și returnează `{reply}` sau o eroare explicită. Lipsa AI produce 503, fără răspuns simulat.
+- Mesajele sunt procesate de Cloudflare AI. Aplicația nu stochează conversațiile în D1/KV sau în loguri. Politica de confidențialitate și informarea din chat descriu acest flux.
+- Protecție demonstrativă: 1200 caractere/întrebare, 16000 octeți/request, 6 solicitări/minut și 30/oră/IP **per instanță Worker**. Aceasta nu este o cotă globală și nu garantează un plafon de facturare. Pentru trafic comercial configurați rate limiting WAF/Turnstile și controlul bugetului din cont. Inferența poate genera costuri Cloudflare.
+- Validare locală: `node --test tests/chat.test.mjs` (Node 22+). Testele folosesc un model simulat, fără cost de inferență; verificarea live este separată.
