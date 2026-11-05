@@ -2,6 +2,8 @@ name: KB preview validation
 on:
   push:
     branches: [feature/scara-ai-kb-contract-v3]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
