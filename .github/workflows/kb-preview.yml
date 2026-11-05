@@ -27,6 +27,8 @@ jobs:
         run: node --test kb/gate0/manifest.test.mjs
       - name: Gate 1 retrieval security tests
         run: node --test kb/gate1/retrieval.test.mjs
+      - name: Gate 1 synthesis security tests
+        run: node --test kb/gate1/synthesis.test.mjs
       - name: Generate 19 KB drafts and manifest (offline)
         run: node kb/gate1/build-service-drafts.mjs
       - name: Verify generated fragments and manifest
