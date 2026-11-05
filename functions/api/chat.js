@@ -66,6 +66,14 @@ export async function onRequest({ request, env }) {
   catch (error) { return json({ error: error.message === 'large' ? 'Mesaj prea mare.' : 'Mesaj invalid.' }, error.message === 'large' ? 413 : 400); }
   if (typeof body?.message !== 'string' || !body.message.trim() || body.message.length > 1200) return json({ error: 'Scrieți o întrebare de maximum 1200 de caractere.' }, 400);
   if (limited(request.headers.get('cf-connecting-ip') || 'unknown')) return json({ error: 'Prea multe întrebări. Reîncercați puțin mai târziu.' }, 429);
+  // Catalog and commercial facts must be deterministic: prevent the model from inventing services or prices.
+  const q=body.message.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+  if (/\\b(pret|preturi|costa|cost|tarif|tarife|oferta|oferte|programare|disponibilitate)\\b/.test(q)) {
+    return json({reply:'ETALON-4322 este un model demonstrativ, nu o firmă care execută lucrări. Nu avem prețuri, oferte sau programări confirmate. Pentru un deviz, contactați o firmă reală care prestează serviciul.',mode:'verified_commercial_facts'});
+  }
+  if (/\\b(servici|pompe|pompa|caldura|climatizare|sanitar|incalzire|radiatoare|centrale|dusuri|ventilatie|canalizare|montaj|reparatii)\\w*/.test(q)) {
+    return fallback(body.message);
+  }
   if (typeof env.AI?.run !== 'function') return fallback(body.message);
   const history = Array.isArray(body.history) ? body.history.slice(-6).filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string').map(m => ({ role: m.role, content: m.content.slice(0, 1200) })) : [];
   try {
