@@ -1,5 +1,6 @@
 import { services } from '../../ai-data/knowledge.js';
 import { matchCatalog } from './assistant/v1/catalog.js';
+import { answerFromKb } from '../../kb/gate1/synthesis.mjs';
 
 const MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8';
 const SYSTEM = `Ești asistentul AI text al SCARA ETALON 4322. Răspunde în română, clar, în maximum 120 de cuvinte, dacă nu se cere detaliere.
@@ -66,6 +67,16 @@ export async function onRequest({ request, env }) {
   catch (error) { return json({ error: error.message === 'large' ? 'Mesaj prea mare.' : 'Mesaj invalid.' }, error.message === 'large' ? 413 : 400); }
   if (typeof body?.message !== 'string' || !body.message.trim() || body.message.length > 1200) return json({ error: 'Scrieți o întrebare de maximum 1200 de caractere.' }, 400);
   if (limited(request.headers.get('cf-connecting-ip') || 'unknown')) return json({ error: 'Prea multe întrebări. Reîncercați puțin mai târziu.' }, 429);
+  // Activate RAG only after the verified D1 pointer has been switched to ACTIVE.
+  // An inactive or unavailable KB never breaks the public assistant.
+  if (env.KB_RAG_STAGING_ENABLED==='true' && env.KB_DB?.prepare && env.KB_R2?.get && env.KB_VECTOR?.query) {
+    try {
+      const rag=await answerFromKb({env,message:body.message});
+      if(rag.mode==='rag' && typeof rag.reply==='string' && rag.sources.length) {
+        return json({reply:rag.reply,mode:'rag',sources:rag.sources,kb_version:rag.kb_version});
+      }
+    } catch { /* fail closed to verified catalog or bounded legacy chat */ }
+  }
   // Catalog and commercial facts must be deterministic: prevent the model from inventing services or prices.
   const q=body.message.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
   if (/\\b(pret|preturi|costa|cost|tarif|tarife|oferta|oferte|programare|disponibilitate)\\b/.test(q)) {
