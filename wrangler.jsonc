@@ -22,6 +22,12 @@
           "binding": "KB_R2",
           "bucket_name": "etalon-4322-kb-preview"
         }
+      ],
+      "vectorize": [
+        {
+          "binding": "KB_VECTOR",
+          "index_name": "etalon-4322-kb-preview"
+        }
       ]
     }
   }
