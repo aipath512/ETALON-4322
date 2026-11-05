@@ -4,5 +4,19 @@
   "compatibility_date": "2026-11-05",
   "ai": {
     "binding": "AI"
+  },
+  "env": {
+    "preview": {
+      "ai": {
+        "binding": "AI"
+      },
+      "d1_databases": [
+        {
+          "binding": "KB_DB",
+          "database_name": "etalon-4322-kb-preview",
+          "database_id": "3f36a8b7-72e0-4df4-8f54-33d631e0781c"
+        }
+      ]
+    }
   }
 }
