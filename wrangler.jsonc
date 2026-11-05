@@ -16,6 +16,12 @@
           "database_name": "etalon-4322-kb-preview",
           "database_id": "3f36a8b7-72e0-4df4-8f54-33d631e0781c"
         }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "KB_R2",
+          "bucket_name": "etalon-4322-kb-preview"
+        }
       ]
     }
   }
