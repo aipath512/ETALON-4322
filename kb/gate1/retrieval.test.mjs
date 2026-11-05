@@ -18,7 +18,7 @@ function mock({state='ACTIVE',review='APPROVED',tamper=false}={}){
  const r2={async get(){return {async text(){return JSON.stringify(tamper?{text:'altered'}:doc);}}}};
  return {db,r2,calls};
 }
-test('tokenization removes duplicates and bounds tokens',()=>{assert.deepEqual(tokenize('Pompe pompe de căldură'),['pompe','căldură']);assert.equal(tokenize('a bb'),[].length);});
+test('tokenization removes duplicates and bounds tokens',()=>{assert.deepEqual(tokenize('Pompe pompe de căldură'),['pompe','căldură']);assert.deepEqual(tokenize('a bb'),[]);});
 test('inactive KB fails closed',async()=>{const m=mock({state:'DRAFT'});await assert.rejects(retrieve({...m,question:'pompe căldură'}),/KB_NOT_ACTIVE/);});
 test('approved fragments returned with verified hash',async()=>{const m=mock();const r=await retrieve({...m,question:'pompe căldură'});assert.equal(r.fragments.length,1);assert.equal(r.fragments[0].content_sha256,hash);});
 test('pending fragments never reach synthesis',async()=>{const m=mock({review:'PENDING'});const r=await retrieve({...m,question:'pompe căldură'});assert.equal(r.fragments.length,0);});
