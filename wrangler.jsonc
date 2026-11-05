@@ -28,7 +28,10 @@
           "binding": "KB_VECTOR",
           "index_name": "etalon-4322-kb-preview"
         }
-      ]
+      ],
+      "vars": {
+        "KB_EMBED_MODEL": "@cf/baai/bge-m3"
+      }
     }
   }
 }
