@@ -1,1 +1,16 @@
-// Gate 1 retrieval implementation; see follow-up commit for complete version.
+const encoder=new TextEncoder();
+export async function digest(v){const b=typeof v==='string'?encoder.encode(v):v;return [...new Uint8Array(await crypto.subtle.digest('SHA-256',b))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+export function canonical(v){if(v===null||typeof v==='string'||typeof v==='boolean')return JSON.stringify(v);if(typeof v==='number'&&Number.isFinite(v))return JSON.stringify(v);if(Array.isArray(v))return '['+v.map(canonical).join(',')+']';if(v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype)return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';throw Error('INVALID_CANONICAL_VALUE');}
+export function tokenize(q){return [...new Set((q.normalize('NFKC').toLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu)||[]).slice(0,8))];}
+export async function retrieve({db,r2,vectorize,embed,question,language='ro',jurisdiction='RO',limit=4}){
+ if(!db?.prepare||!r2?.get)throw Error('KB_NOT_CONFIGURED');
+ if(typeof question!=='string'||!question.trim()||question.length>1200)throw Error('INVALID_QUESTION');
+ const active=await db.prepare('SELECT g.kb_version,g.index_version,g.state FROM kb_active_pointer p JOIN kb_generations g ON g.kb_id=p.kb_id AND g.index_version=p.index_version WHERE p.kb_id=?').bind('ETALON-4322').first();
+ if(!active||active.state!=='ACTIVE')throw Error('KB_NOT_ACTIVE');
+ const ids=new Set(),tokens=tokenize(question);
+ if(tokens.length){const q=tokens.map(t=>'"'+t.replaceAll('"','""')+'"').join(' OR ');const rows=await db.prepare('SELECT fragment_id FROM kb_fragment_fts WHERE kb_id=? AND index_version=? AND kb_fragment_fts MATCH ? LIMIT 16').bind('ETALON-4322',active.index_version,q).all();for(const r of rows.results||[])ids.add(r.fragment_id);}
+ if(vectorize?.query&&typeof embed==='function'){const vector=await embed(question);const matches=await vectorize.query(vector,{topK:12,returnMetadata:'all',filter:{kb_id:'ETALON-4322',index_version:active.index_version}});for(const m of matches.matches||[])if(m.metadata?.kb_id==='ETALON-4322'&&m.metadata?.index_version===active.index_version&&typeof m.metadata.fragment_id==='string')ids.add(m.metadata.fragment_id);}
+ const fragments=[];
+ for(const id of [...ids].slice(0,16)){const row=await db.prepare("SELECT fragment_id,fragment_revision,r2_key,content_sha256,language,jurisdiction,review_status FROM kb_fragments WHERE kb_id=? AND index_version=? AND fragment_id=? AND language=? AND jurisdiction=? AND review_status='APPROVED' ORDER BY fragment_revision DESC LIMIT 1").bind('ETALON-4322',active.index_version,id,language,jurisdiction).first();if(!row)continue;const obj=await r2.get(row.r2_key);if(!obj)throw Error('KB_R2_MISSING');const parsed=JSON.parse(await obj.text());if(await digest(canonical(parsed))!==row.content_sha256)throw Error('KB_HASH_MISMATCH');if(typeof parsed.text!=='string'||!parsed.text.trim())throw Error('KB_INVALID_FRAGMENT');fragments.push({fragment_id:id,content_sha256:row.content_sha256,text:parsed.text.slice(0,2400)});if(fragments.length>=limit)break;}
+ return {kb_id:'ETALON-4322',kb_version:active.kb_version,index_version:active.index_version,fragments};
+}
