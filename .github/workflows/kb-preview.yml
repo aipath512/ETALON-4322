@@ -36,7 +36,9 @@ jobs:
           verifyManifest(manifest,blobs);
           console.log('Verified 19 draft fragments, manifest and SHA-256 digests');
           NODE
-      - name: Gate 2 preflight (read-only)\n        run: node kb/gate1/preflight.mjs\n      - name: Upload generated draft artifacts
+      - name: Gate 2 preflight (read-only)
+        run: node kb/gate1/preflight.mjs
+      - name: Upload generated draft artifacts
         uses: actions/upload-artifact@v4
         with:
           name: etalon-4322-kb-drafts
