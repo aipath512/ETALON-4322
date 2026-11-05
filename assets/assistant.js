@@ -14,6 +14,9 @@
   const launch=$('.ai-launch'), panel=$('.ai-panel'), log=$('.ai-log'), input=$('textarea'), send=$('.ai-send'), status=$('.ai-status');
   const history=[]; let busy=false;
   function message(role,text,error=false) { 
+    // Normalize a model-produced SCARA homepage link incorrectly joined to a service path.
+    text=text.replace(/\[[^\]]+\]\(https:\/\/scara\.dev\/\)\s*\/?servicii\/(incalzire|sanitare|climatizare)\/([a-z0-9-]+)\/?/gi,(_,family,slug)=>'/servicii/'+family+'/'+slug+'/');
+    text=text.replace(/\[[^\]]+\]\(https:\/\/scara\.dev\/\)/gi,'https://scara.dev/');
     // Repair split Markdown links returned by the model.
     text=text.replace(/\[[^\]]+\]\((\/servicii\/(?:incalzire|sanitare|climatizare)\/)\)\s*([a-z0-9-]+)\/?/gi,(_,base,slug)=>base+slug+'/');
     text=text.replace(/\[[^\]]+\]\((\/servicii\/(?:incalzire|sanitare|climatizare)\/[a-z0-9-]+\/)\)/gi,'$1');
