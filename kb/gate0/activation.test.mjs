@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { validateActivation } from './activation.mjs';
+const generation = { state:'TESTED', manifest_sha256:'a'.repeat(64), kb_version:'1', index_version:'idx1' };
+const evidence = { r2_integrity:true, d1_integrity:true, fts_visibility:true, vector_visibility:true, retrieval_evaluation:true, safety_evaluation:true, tenant_isolation:true, fragment_count:2, vector_count:2, fts_count:2, kb_version:'1', index_version:'idx1' };
+test('complete generation', () => assert.equal(validateActivation({generation,evidence,expectedFragments:2}),true));
+test('missing vectors', () => assert.throws(() => validateActivation({generation,evidence:{...evidence,vector_count:1},expectedFragments:2})));
+test('untested generation', () => assert.throws(() => validateActivation({generation:{...generation,state:'READY'},evidence,expectedFragments:2})));
+test('unverified vector visibility', () => assert.throws(() => validateActivation({generation,evidence:{...evidence,vector_visibility:false},expectedFragments:2})));
+test('mixed index version', () => assert.throws(() => validateActivation({generation,evidence:{...evidence,index_version:'idx2'},expectedFragments:2})));
