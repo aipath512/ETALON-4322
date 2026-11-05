@@ -1,0 +1,44 @@
+name: KB preview validation
+on:
+  push:
+    branches: [feature/scara-ai-kb-contract-v3]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Gate 0 integrity tests
+        run: node --test kb/gate0/manifest.test.mjs
+      - name: Generate 19 KB drafts and manifest (offline)
+        run: node kb/gate1/build-service-drafts.mjs
+      - name: Verify generated fragments and manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { build, verifyManifest } from './kb/gate0/manifest.mjs';
+          import { services } from './ai-data/knowledge.js';
+          const root='kb/gate1/generated/etalon-4322-v1';
+          const manifest=JSON.parse(await readFile('kb/gate1/generated/manifest.json','utf8'));
+          if(manifest.entries.length!==19 || services.length!==19)throw Error('Count mismatch');
+          const blobs={};
+          for(const e of manifest.entries){
+            const bytes=await readFile(root+'/'+e.r2_key);
+            const data=JSON.parse(bytes.toString('utf8'));
+            if(data.review_status!=='PENDING')throw Error('Unreviewed fragment unexpectedly approved');
+            blobs[e.r2_key]=bytes;
+          }
+          verifyManifest(manifest,blobs);
+          console.log('Verified 19 draft fragments, manifest and SHA-256 digests');
+          NODE
+      - name: Upload generated draft artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: etalon-4322-kb-drafts
+          path: kb/gate1/generated/
+          retention-days: 7
