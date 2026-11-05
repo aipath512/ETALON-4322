@@ -1,7 +1,7 @@
 const encoder=new TextEncoder();
 export async function digest(v){const b=typeof v==='string'?encoder.encode(v):v;return [...new Uint8Array(await crypto.subtle.digest('SHA-256',b))].map(x=>x.toString(16).padStart(2,'0')).join('');}
 export function canonical(v){if(v===null||typeof v==='string'||typeof v==='boolean')return JSON.stringify(v);if(typeof v==='number'&&Number.isFinite(v))return JSON.stringify(v);if(Array.isArray(v))return '['+v.map(canonical).join(',')+']';if(v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype)return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';throw Error('INVALID_CANONICAL_VALUE');}
-export function tokenize(q){return [...new Set((q.normalize('NFKC').toLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu)||[]).slice(0,8))];}
+export function tokenize(q){return [...new Set((q.normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]{3,}/gu)||[]).slice(0,8))];}
 export async function retrieve({db,r2,vectorize,embed,question,language='ro',jurisdiction='RO',limit=4}){
  if(!db?.prepare||!r2?.get)throw Error('KB_NOT_CONFIGURED');
  if(typeof question!=='string'||!question.trim()||question.length>1200)throw Error('INVALID_QUESTION');
