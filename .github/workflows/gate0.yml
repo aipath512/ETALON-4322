@@ -15,4 +15,6 @@ jobs:
         with:
           node-version: '22'
       - name: Run Gate 0 unit tests
-        run: node --test kb/gate0/*.test.mjs kb/gate1/*.test.mjs
+        run: |
+            node --test kb/gate0/*.test.mjs kb/gate1/*.test.mjs
+            node kb/gate1/check-preview-config.mjs
