@@ -1,0 +1,24 @@
+{
+  "name": "SCARA Etalon CAEN 4322",
+  "short_name": "SCARA 4322",
+  "description": "Etalon sectorial demonstrativ pentru instalații sanitare, încălzire și climatizare",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090a0b",
+  "theme_color": "#090a0b",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
