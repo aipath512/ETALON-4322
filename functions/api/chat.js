@@ -78,11 +78,11 @@ export async function onRequest({ request, env }) {
     } catch { /* fail closed to verified catalog or bounded legacy chat */ }
   }
   // Catalog and commercial facts must be deterministic: prevent the model from inventing services or prices.
-  const q=body.message.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
-  if (/\\b(pret|preturi|costa|cost|tarif|tarife|oferta|oferte|programare|disponibilitate)\\b/.test(q)) {
+  const q=body.message.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if (/\b(pret|preturi|costa|cost|tarif|tarife|oferta|oferte|programare|disponibilitate)\b/.test(q)) {
     return json({reply:'ETALON-4322 este un model demonstrativ, nu o firmă care execută lucrări. Nu avem prețuri, oferte sau programări confirmate. Pentru un deviz, contactați o firmă reală care prestează serviciul.',mode:'verified_commercial_facts'});
   }
-  if (/\\b(servici|pompe|pompa|caldura|climatizare|sanitar|incalzire|radiatoare|centrale|dusuri|ventilatie|canalizare|montaj|reparatii)\\w*/.test(q)) {
+  if (/\b(servici|pompe|pompa|caldura|climatizare|sanitar|incalzire|radiatoare|centrale|dusuri|ventilatie|canalizare|montaj|reparatii)\w*/.test(q)) {
     return fallback(body.message);
   }
   if (typeof env.AI?.run !== 'function') return fallback(body.message);
