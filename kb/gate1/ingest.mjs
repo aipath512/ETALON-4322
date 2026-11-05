@@ -14,6 +14,8 @@ export async function stage({env,manifest,documents,manifestSha}){
  assert(manifest?.kb_id===KB&&manifest?.index_version&&manifest?.kb_version&&manifest?.entries?.length===19,'INVALID_MANIFEST');
  assert(manifest.embedding_model==='bge-m3'&&env.KB_EMBED_MODEL==='@cf/baai/bge-m3','EMBEDDING_MODEL_MISMATCH');
  assert(Array.isArray(documents)&&documents.length===19,'INVALID_DOCUMENTS');
+ assert(typeof manifestSha==='string'&&/^[a-f0-9]{64}$/.test(manifestSha),'INVALID_MANIFEST_HASH');
+ assert(await digest(canonical(manifest)+'\n')===manifestSha,'MANIFEST_HASH_MISMATCH');
  const byKey=new Map(documents.map(d=>[d.key,d.content]));
  assert(byKey.size===19,'DUPLICATE_DOCUMENT');
  const rows=[],vectors=[],fts=[];
@@ -21,6 +23,7 @@ export async function stage({env,manifest,documents,manifestSha}){
   const doc=byKey.get(entry.r2_key);
   assert(doc&&typeof doc==='object'&&doc.review_status==='APPROVED','NOT_APPROVED');
   assert(entry.language==='ro'&&entry.jurisdiction==='RO'&&entry.fragment_revision===1,'INVALID_METADATA');
+  assert(typeof entry.r2_key==='string'&&/^[a-z0-9-]+\.json$/.test(entry.r2_key),'INVALID_R2_KEY');
   assert(typeof doc.text==='string'&&doc.text.trim()&&doc.text.length<=6000,'INVALID_TEXT');
   assert(await digest(canonical(doc))===entry.content_sha256,'CONTENT_HASH_MISMATCH');
   assert(await digest(doc.embedding_text??doc.text)===entry.embedding_input_sha256,'EMBEDDING_HASH_MISMATCH');
@@ -38,8 +41,8 @@ export async function stage({env,manifest,documents,manifestSha}){
  await db.prepare("UPDATE kb_generations SET state='INDEXING' WHERE kb_id=? AND index_version=?").bind(KB,manifest.index_version).run();
  for(const {entry,doc} of rows){
   // R2 is written first; D1 will only reference an uploaded object.
-  await env.KB_R2.put(entry.r2_key,canonical(doc),{httpMetadata:{contentType:'application/json'}});
-  await db.prepare("INSERT OR REPLACE INTO kb_fragments(kb_id,index_version,fragment_id,fragment_revision,artifact_id,r2_key,content_sha256,embedding_input_sha256,vector_id,language,jurisdiction,review_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,'APPROVED')").bind(KB,manifest.index_version,entry.fragment_id,entry.fragment_revision,entry.artifact_id,entry.r2_key,entry.content_sha256,entry.embedding_input_sha256,entry.vector_id,entry.language,entry.jurisdiction).run();
+  await env.KB_R2.put('kb/'+manifest.index_version+'/'+entry.r2_key,canonical(doc),{httpMetadata:{contentType:'application/json'}});
+  await db.prepare("INSERT OR REPLACE INTO kb_fragments(kb_id,index_version,fragment_id,fragment_revision,artifact_id,r2_key,content_sha256,embedding_input_sha256,vector_id,language,jurisdiction,review_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,'APPROVED')").bind(KB,manifest.index_version,entry.fragment_id,entry.fragment_revision,entry.artifact_id,'kb/'+manifest.index_version+'/'+entry.r2_key,entry.content_sha256,entry.embedding_input_sha256,entry.vector_id,entry.language,entry.jurisdiction).run();
   await db.prepare("DELETE FROM kb_fragment_fts WHERE kb_id=? AND index_version=? AND fragment_id=?").bind(KB,manifest.index_version,entry.fragment_id).run();
   await db.prepare("INSERT INTO kb_fragment_fts(kb_id,index_version,fragment_id,body) VALUES(?,?,?,?)").bind(KB,manifest.index_version,entry.fragment_id,doc.text).run();
  }
