@@ -30,7 +30,8 @@
         }
       ],
       "vars": {
-        "KB_EMBED_MODEL": "@cf/baai/bge-m3"
+        "KB_EMBED_MODEL": "@cf/baai/bge-m3",
+        "KB_RAG_STAGING_ENABLED": "true"
       }
     }
   }
