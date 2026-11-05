@@ -3,7 +3,7 @@ const respond=(body,status=200)=>new Response(JSON.stringify(body),{status,heade
 export async function onRequest({request,env}){
   if(request.method!=="GET")return respond({error:"METHOD_NOT_ALLOWED"},405);
   const host=new URL(request.url).hostname.toLowerCase();
-  if(host!=="feature-scara-ai-kb-contract.etalon-4322.pages.dev")return respond({error:"NOT_FOUND"},404);
+  if(!host.endsWith(".etalon-4322.pages.dev")||host==="etalon-4322.pages.dev")return respond({error:"NOT_FOUND"},404);
   const checks={
     ai:typeof env.AI?.run==="function",
     d1:typeof env.KB_DB?.prepare==="function",
