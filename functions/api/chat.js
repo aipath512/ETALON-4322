@@ -65,8 +65,8 @@ export async function onRequest({ request, env }) {
   try { body = await readBody(request); }
   catch (error) { return json({ error: error.message === 'large' ? 'Mesaj prea mare.' : 'Mesaj invalid.' }, error.message === 'large' ? 413 : 400); }
   if (typeof body?.message !== 'string' || !body.message.trim() || body.message.length > 1200) return json({ error: 'Scrieți o întrebare de maximum 1200 de caractere.' }, 400);
-  if (typeof env.AI?.run !== 'function') return fallback(body.message);
   if (limited(request.headers.get('cf-connecting-ip') || 'unknown')) return json({ error: 'Prea multe întrebări. Reîncercați puțin mai târziu.' }, 429);
+  if (typeof env.AI?.run !== 'function') return fallback(body.message);
   const history = Array.isArray(body.history) ? body.history.slice(-6).filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string').map(m => ({ role: m.role, content: m.content.slice(0, 1200) })) : [];
   try {
     const result = await env.AI.run(MODEL, { messages: [{ role: 'system', content: SYSTEM }, ...history, { role: 'user', content: body.message.trim() }], max_tokens: 400, temperature: 0.2 });
