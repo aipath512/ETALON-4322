@@ -1,0 +1,121 @@
+{
+  "caen": "4322",
+  "nace": "43.22",
+  "status": "PILOT_NOT_CERTIFIED_EXHAUSTIVE",
+  "services": [
+    {
+      "id": "centrale-termice",
+      "category": "incalzire",
+      "title": "Montaj și înlocuire centrale termice",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "radiatoare",
+      "category": "incalzire",
+      "title": "Montaj și înlocuire radiatoare",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "radiatoare-portprosop",
+      "category": "incalzire",
+      "title": "Radiatoare decorative și portprosop",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "incalzire-pardoseala",
+      "category": "incalzire",
+      "title": "Încălzire în pardoseală",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "pompe-caldura",
+      "category": "incalzire",
+      "title": "Pompe de căldură",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "distributie-termica",
+      "category": "incalzire",
+      "title": "Distribuție termică și automatizare",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "mentenanta-termica",
+      "category": "incalzire",
+      "title": "Întreținerea instalațiilor termice",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "alimentare-apa",
+      "category": "sanitare",
+      "title": "Instalații de alimentare cu apă",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "canalizare",
+      "category": "sanitare",
+      "title": "Instalații de canalizare și evacuare",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "obiecte-sanitare",
+      "category": "sanitare",
+      "title": "Montaj obiecte sanitare",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "dusuri",
+      "category": "sanitare",
+      "title": "Cabine de duș și dușuri walk-in",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "baterii-robineti",
+      "category": "sanitare",
+      "title": "Baterii, robineți și racorduri",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "reparatii-sanitare",
+      "category": "sanitare",
+      "title": "Reparații și remedieri scurgeri",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "modernizare-baie",
+      "category": "sanitare",
+      "title": "Modernizarea instalațiilor unei băi",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "montaj-aer-conditionat",
+      "category": "climatizare",
+      "title": "Montaj aer condiționat",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "multisplit",
+      "category": "climatizare",
+      "title": "Sisteme multisplit",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "ventilatie",
+      "category": "climatizare",
+      "title": "Ventilație și confort interior",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "reparatii-ac",
+      "category": "climatizare",
+      "title": "Diagnostic și reparații climatizare",
+      "confirmed_for_company": false
+    },
+    {
+      "id": "mentenanta-ac",
+      "category": "climatizare",
+      "title": "Întreținerea sistemelor de climatizare",
+      "confirmed_for_company": false
+    }
+  ]
+}
