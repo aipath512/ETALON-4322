@@ -14,10 +14,9 @@
   const launch=$('.ai-launch'), panel=$('.ai-panel'), log=$('.ai-log'), input=$('textarea'), send=$('.ai-send'), status=$('.ai-status');
   const history=[]; let busy=false;
   function message(role,text,error=false) { 
-    // Repair the specific split-link form sometimes returned by the model. 
-    text=text.replace(/\\[[^\\]]+\\]\\((\\/servicii\\/(?:incalzire|sanitare|climatizare)\\/)\\)\\s*([a-z0-9-]+)\\/?/gi,(_,base,slug)=>base+slug+'/'); 
-    // Render Markdown service links as plain URLs; DOM linkification below is allowlisted. 
-    text=text.replace(/\\[[^\\]]+\\]\\((\\/servicii\\/(?:incalzire|sanitare|climatizare)\\/[a-z0-9-]+\\/)\\)/gi,'$1');
+    // Repair split Markdown links returned by the model.
+    text=text.replace(/\[[^\]]+\]\((\/servicii\/(?:incalzire|sanitare|climatizare)\/)\)\s*([a-z0-9-]+)\/?/gi,(_,base,slug)=>base+slug+'/');
+    text=text.replace(/\[[^\]]+\]\((\/servicii\/(?:incalzire|sanitare|climatizare)\/[a-z0-9-]+\/)\)/gi,'$1');
     const p=document.createElement('p'); p.className='ai-message '+role+(error?' error':'');
     // Model output is text, never HTML. Only known same-site service URLs become links.
     const pattern=/(?:https:\/\/scara\.dev\/|\/servicii\/(?:incalzire|sanitare|climatizare)\/(?:[a-z0-9-]+\/)?)/g;
