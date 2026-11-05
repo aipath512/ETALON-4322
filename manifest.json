@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "etalon_id": "RO-CAEN-4322",
+  "version": "1.0.0",
+  "status": "PILOT_UNAPPROVED",
+  "caen": "4322",
+  "nace": "43.22",
+  "service_count": 19,
+  "hero_images_status": "PENDING_BINARY_UPLOAD",
+  "company": "none - illustrative model",
+  "original_zip_file_count": 40,
+  "source": "SCARA_ETALON_CAEN_4322_V1.zip"
+}
