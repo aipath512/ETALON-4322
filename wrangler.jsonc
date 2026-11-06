@@ -4,5 +4,35 @@
   "compatibility_date": "2026-11-05",
   "ai": {
     "binding": "AI"
+  },
+  "env": {
+    "preview": {
+      "ai": {
+        "binding": "AI"
+      },
+      "d1_databases": [
+        {
+          "binding": "KB_DB",
+          "database_name": "etalon-4322-kb-preview",
+          "database_id": "3f36a8b7-72e0-4df4-8f54-33d631e0781c"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "KB_R2",
+          "bucket_name": "etalon-4322-kb-preview"
+        }
+      ],
+      "vectorize": [
+        {
+          "binding": "KB_VECTOR",
+          "index_name": "etalon-4322-kb-preview"
+        }
+      ],
+      "vars": {
+        "KB_EMBED_MODEL": "@cf/baai/bge-m3",
+        "KB_RAG_STAGING_ENABLED": "true"
+      }
+    }
   }
 }
