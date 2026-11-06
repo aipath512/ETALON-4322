@@ -49,3 +49,13 @@ Commitul `ffaa4dd87ad659c2fa17e0f457ee4a13968accae` a modificat homepage-ul să 
 - Mesajele sunt procesate de Cloudflare AI. Aplicația nu stochează conversațiile în D1/KV sau în loguri. Politica de confidențialitate și informarea din chat descriu acest flux.
 - Protecție demonstrativă: 1200 caractere/întrebare, 16000 octeți/request, 6 solicitări/minut și 30/oră/IP **per instanță Worker**. Aceasta nu este o cotă globală și nu garantează un plafon de facturare. Pentru trafic comercial configurați rate limiting WAF/Turnstile și controlul bugetului din cont. Inferența poate genera costuri Cloudflare.
 - Validare locală: `node --test tests/chat.test.mjs` (Node 22+). Testele folosesc un model simulat, fără cost de inferență; verificarea live este separată.
+
+
+## Merge editorial ETALON-4322 V5 — 7 noiembrie 2026
+
+- Au fost actualizate cele 19 pagini individuale, `services.json`, `ai-data/knowledge.js` și pagina `/surse/`.
+- Designul HERO, navigarea, asistentul existent și avertismentele demonstrative sunt păstrate.
+- Conținutul provine din [manifestul V5](https://github.com/aipath512/scara-valorii/blob/main/docs/ETALON_4322_TYNIHOLMES_ITER5_PUBLICATION_CANDIDATE_2026-11-07.json) cu [auditul final](https://github.com/aipath512/scara-valorii/blob/main/docs/ETALON_4322_TYNIHOLMES_ITER5_FINAL_AUDIT_2026-11-07.md).
+- Serviciile `confirmed_for_company` rămân `false` și paginile demonstrative păstrează `noindex,nofollow`.
+- Asistentul de pe site utilizează în continuare Workers AI / LLM, dar cu descrierile actualizate. Nu a fost migrat la D1/FTS5. Nu au fost scrise date în D1/R2.
+- Un commit în repository nu confirmă singur deploy-ul Cloudflare Pages: verificarea live se face separat.
